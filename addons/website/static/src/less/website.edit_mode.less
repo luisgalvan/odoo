@@ -43,6 +43,11 @@
     }
 
     &.oe_structure.oe_empty, &[data-oe-type=html] {
+        &:empty {
+            height: 300px;
+            background: url(/website/static/src/img/drag_here.png) center no-repeat;
+            background-size: 380px;
+        }
         > p:empty:only-child {
             color: #aaa;
         }
@@ -116,4 +121,14 @@ table.editorbar-panel {
 
 .editor_enable .js_language_selector {
     display: none;
+}
+
+// Facebook Page
+.editor_enable .o_facebook_page:not(.o_facebook_preview) {
+    iframe {
+        pointer-events: none;
+    }
+    .o_facebook_alert .o_add_facebook_page {
+        cursor: pointer;
+    }
 }

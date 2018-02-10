@@ -1,89 +1,106 @@
-// --------------------------------------------------------------------------
-// This file contains rules applying on elements shared between views
-// --------------------------------------------------------------------------
+/**
+ * This file regroups the rules which apply on elements which are shared between
+ * all renderers. For field default rules, see the fields.less file.
+ */
 
-// Many2many tags
-.o_form_field_many2manytags {
-    .o_tag_color_0 {
-        background-color: #4D4D4D;
+// Invisible modifier (can be inside the view, the button area, ...)
+.o_invisible_modifier {
+    display: none!important;
+}
+
+// Status
+// This should normally be put in fields.less but these classes are used outside
+// of `.o_field_widget` so it needs to be placed at an upper level.
+.o_status {
+    display: inline-block;
+    height: 12px;
+    width: 12px;
+    border-radius: 6px;
+    vertical-align: middle;
+
+    background-color: @gray-lighter-dark;
+
+    &.o_status_green {
+        background-color: @brand-success;
     }
-    .o_tag_color_1 {
-        background-color: #61BD4F;
-    }
-    .o_tag_color_2 {
-        background-color: #F2D600;
-    }
-    .o_tag_color_3 {
-        background-color: #FFAB4A;
-    }
-    .o_tag_color_4 {
-        background-color: #EB5A46;
-    }
-    .o_tag_color_5 {
-        background-color: #875A7B;
-    }
-    .o_tag_color_6 {
-        background-color: #0079BF;
-    }
-    .o_tag_color_7 {
-        background-color: #00C2E0;
-    }
-    .o_tag_color_8 {
-        background-color: #4CD98E;
-    }
-    .o_tag_color_9 {
-        background-color: #FF80CE;
-    }
-    .o_tag_color_10 {
-        background-color: #B6BBBF;
+    &.o_status_red {
+        background-color: @brand-danger;
     }
 }
 
-// Stars
-.o_priority {
-    display: inline-block;
-    padding: 0;
-    margin: 0;
-    vertical-align: middle;
-    > .o_priority_star {
-        display: inline-block;
-        font-size: 1.35em;
-        &:hover, &:focus {
-            text-decoration: none;
-            outline: none;
-        }
+.o_btn-link-as-button {
+    padding: 2px;
+    font-size:12px;
 
-        + .o_priority_star {
-            padding-left: 5px;
-        }
-
-        &.fa-star-o {
-            color: @odoo-main-color-muted;
-        }
-        &.fa-star {
-            color: gold;
-        }
+    & > a {
+        margin-bottom: -4px !important;
+        margin-left: 3px;
     }
 }
 
 // No content helper
-.oe_view_nocontent {
-    a {
-        cursor: pointer;
-    }
-    span, a {
-        display: inline!important;
-    }
-}
-// Hide view_nocontent in x2many fields
-.o_form_field .oe_view_nocontent {
-    display: none;
-}
-.o_cannot_create .oe_view_nocontent_create {
-    display: none;
+.o_view_nocontent_container {
+    .o-flex-display();
+    height: 100%;
+    padding: 0;
 }
 
-// Specific success color for toggle_button widget
-.fa.o_toggle_button_success {
-    color: @brand-success;
+.o_view_nocontent {
+    &.o_kanban_view_nocontent {
+        .o-position-absolute(20%, 0, 0, 0);        
+        pointer-events: none;
+    }
+
+    .o_nocontent_help {
+        pointer-events: auto;
+        max-width: 650px;
+        margin: auto;
+        padding: 15px;
+        z-index: 1000;
+        text-align: center;
+        color: @odoo-tooltip-text-color;
+        font-size: 115%;
+
+        > p:first-of-type {
+            margin-top: 0;
+            color: @odoo-tooltip-title-text-color;
+            font-weight: bold;
+            font-size: 125%;
+        }
+
+        .o-init-image() {
+            content: "";
+            display: block;
+            margin: auto;
+            background-size: cover;
+        }
+
+        .o_view_nocontent_smiling_face:before {
+            .o-init-image();
+            .size(120px, 140px);
+            background: transparent url(/web/static/src/img/smiling_face.svg) no-repeat center;
+        }
+
+        .o_view_nocontent_neutral_face:before {
+            .o-init-image();
+            .size(120px, 140px);
+            background: transparent url(/web/static/src/img/neutral_face.svg) no-repeat center;
+        }
+
+        .o_view_nocontent_empty_folder:before {
+            .o-init-image();
+            .size(120px, 80px);
+            margin-top: 30px;
+            margin-bottom: 30px;
+            background: transparent url(/web/static/src/img/empty_folder.svg) no-repeat center;
+        }
+
+        .o_empty_custom_dashboard {
+            min-height: 327px;
+            margin-left: -@grid-gutter-width/2;
+            margin-top: -@grid-gutter-width/2;
+            padding: 100px 0 0 137px;
+            background: transparent url(/web/static/src/img/graph_background.png) no-repeat 0 0;
+        }
+    }
 }

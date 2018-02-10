@@ -1,7 +1,9 @@
 from odoo.addons.account.tests.account_test_users import AccountTestUsers
 import datetime
+from odoo.tests import tagged
 
 
+@tagged('post_install', '-at_install')
 class TestAccountCustomerInvoice(AccountTestUsers):
 
     def test_customer_invoice(self):
@@ -91,13 +93,13 @@ class TestAccountCustomerInvoice(AccountTestUsers):
         total_after_confirm = self.partner3.total_invoiced
         self.assertEquals(total_after_confirm - total_before_confirm, self.account_invoice_customer0.amount_untaxed_signed)
 
-        # I refund the invoice Using Refund Button
+        # I created a credit note Using Add Credit Note Button
         invoice_refund_obj = self.env['account.invoice.refund']
         self.account_invoice_refund_0 = invoice_refund_obj.create(dict(
-            description='Refund To China Export',
+            description='Credit Note for China Export',
             date=datetime.date.today(),
             filter_refund='refund'
         ))
 
-        # I clicked on refund button.
+        # I clicked on Add Credit Note button.
         self.account_invoice_refund_0.invoice_refund()

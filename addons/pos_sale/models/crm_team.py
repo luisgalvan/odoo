@@ -18,7 +18,7 @@ class CrmTeam(models.Model):
         ('month', 'Month'),
         ('user', 'Salesperson'),
         ('pos', 'Point of Sale'),
-    ], string='Group by', default='day', help="How this channel's dashboard graph will group the results.")
+    ], string='POS Grouping', default='day', help="How this channel's dashboard graph will group the results.")
 
     @api.onchange('dashboard_graph_group_pos')
     def _onchange_dashboard_graph_group_pos(self):
@@ -112,5 +112,5 @@ class CrmTeam(models.Model):
 
     def _graph_title_and_key(self):
         if self.team_type == 'pos':
-            return ['', _('Untaxed Amount')] # no more title
+            return ['', _('Sales: Untaxed Amount')] # no more title
         return super(CrmTeam, self)._graph_title_and_key()

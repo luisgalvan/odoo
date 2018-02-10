@@ -5,9 +5,10 @@ import datetime
 import unittest
 
 from odoo.tools import misc
-from odoo.tests.common import TransactionCase
+from odoo.tests.common import TransactionCase, tagged
 
 
+@tagged('standard', 'at_install')
 class TestCountingStream(unittest.TestCase):
     def test_empty_stream(self):
         s = misc.CountingStream(iter([]))
@@ -16,14 +17,14 @@ class TestCountingStream(unittest.TestCase):
         self.assertEqual(s.index, 0)
 
     def test_single(self):
-        s = misc.CountingStream(xrange(1))
+        s = misc.CountingStream(range(1))
         self.assertEqual(s.index, -1)
         self.assertEqual(next(s, None), 0)
         self.assertIsNone(next(s, None))
         self.assertEqual(s.index, 1)
 
     def test_full(self):
-        s = misc.CountingStream(xrange(42))
+        s = misc.CountingStream(range(42))
         for _ in s:
             pass
         self.assertEqual(s.index, 42)

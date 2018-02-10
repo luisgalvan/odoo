@@ -2,7 +2,8 @@ odoo.define('barcodes.BarcodeEvents', function(require) {
 "use strict";
 
 var core = require('web.core');
-var mixins = core.mixins;
+var mixins = require('web.mixins');
+var session = require('web.session');
 
 
 // For IE >= 9, use this, new CustomEvent(), instead of new Event()
@@ -26,7 +27,7 @@ var BarcodeEvents = core.Class.extend(mixins.PropertiesMixin, {
     suffix: /[\n\r\t]+/,
     // Keys from a barcode scanner are usually processed as quick as possible,
     // but some scanners can use an intercharacter delay (we support <= 50 ms)
-    max_time_between_keys_in_ms: 55,
+    max_time_between_keys_in_ms: session.max_time_between_keys_in_ms || 55,
 
     init: function() {
         mixins.PropertiesMixin.init.call(this);
@@ -77,13 +78,7 @@ var BarcodeEvents = core.Class.extend(mixins.PropertiesMixin, {
                     'bubbles': old_event.bubbles,
                     'cancelable': old_event.cancelable,
                 };
-                try {
-                    new_event = new Event("keypress", params);
-                } catch(error) {
-                    // For IE >= 9, use new CustomEvent(), instead of new Event()
-                    new_event = new CustomEvent("keypress", params);
-                }
-
+                new_event = $.Event('keypress', params);
                 new_event.viewArg = old_event.viewArg;
                 new_event.ctrl = old_event.ctrl;
                 new_event.alt = old_event.alt;
@@ -96,7 +91,7 @@ var BarcodeEvents = core.Class.extend(mixins.PropertiesMixin, {
                 new_event.which = old_event.which;
                 new_event.dispatched_by_barcode_reader = true;
 
-                old_event.target.dispatchEvent(new_event);
+                $(old_event.target).trigger(new_event);
             }
         }
     },
@@ -113,6 +108,7 @@ var BarcodeEvents = core.Class.extend(mixins.PropertiesMixin, {
         if (e.key === "ArrowLeft" || e.key === "ArrowRight" ||
             e.key === "ArrowUp" || e.key === "ArrowDown" ||
             e.key === "Escape" || e.key === "Tab" ||
+            e.key === "Backspace" || e.key === "Delete" ||
             /F\d\d?/.test(e.key)) {
             return true;
         } else {
@@ -153,7 +149,7 @@ var BarcodeEvents = core.Class.extend(mixins.PropertiesMixin, {
         // have no way of redispatching 'genuine' key events. Resent events
         // don't trigger native event handlers of elements. So this means that
         // our fake events will not appear in eg. an <input> element.
-        if (this.element_is_editable(e.target) && e.target.getAttribute("barcode_events") !== "true")
+        if ((this.element_is_editable(e.target) && !$(e.target).data('enableBarcode')) && e.target.getAttribute("barcode_events") !== "true")
             return;
 
         // Catch and buffer the event
@@ -172,24 +168,27 @@ var BarcodeEvents = core.Class.extend(mixins.PropertiesMixin, {
     },
 
     start: function(prevent_key_repeat){
-        document.body.addEventListener('keypress', this.__handler, true);
+        $('body').bind("keypress", this.__handler);
         if (prevent_key_repeat === true) {
-            document.body.addEventListener('keydown', this.__keydown_handler, true);
-            document.body.addEventListener('keyup', this.__keyup_handler, true);
+            $('body').bind("keydown", this.__keydown_handler);
+            $('body').bind('keyup', this.__keyup_handler);
         }
     },
 
     stop: function(){
-        document.body.removeEventListener('keypress', this.__handler, true);
-        document.body.removeEventListener('keydown', this.__keydown_handler, true);
-        document.body.removeEventListener('keyup', this.__keyup_handler, true);
+        $('body').unbind("keypress", this.__handler);
+        $('body').unbind("keydown", this.__keydown_handler);
+        $('body').unbind('keyup', this.__keyup_handler);
     },
 });
 
 return {
-    // Singleton that emits barcode_scanned events on core.bus
+    /** Singleton that emits barcode_scanned events on core.bus */
     BarcodeEvents: new BarcodeEvents(),
-    // List of barcode prefixes that are reserved for internal purposes
+    /**
+     * List of barcode prefixes that are reserved for internal purposes
+     * @type Array
+     */
     ReservedBarcodePrefixes: ['O-CMD'],
 };
 

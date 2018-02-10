@@ -24,13 +24,6 @@
 @o_mm_def_btn_bg        : @o_mm_def_color_gamma;
 @o_mm_def_btn_text      : @o_mm_def_color_beta;
 
-// ===== Editor =====
-#web_editor_inside_iframe {
-    #wrapwrap > main #editable_area {
-        background-color: transparent;
-    }
-}
-
 // ===== Colors =====
 .bg-beta {
     background-color: @o_mm_def_color_zeta;
@@ -49,27 +42,41 @@
 
 // ===== Layout =====
 .o_layout {
-    font-family: @o_mm_def_font;
-    color: lighten(@o_mm_def_text_color, 20%);
     overflow: hidden;
-    width: 100%;
+    box-sizing: content-box;
+    width: 94%;
     min-height: 100%;
     background-color: @o_mm_def_color_alpha;
-    padding: 24px 0;
+    padding: 0 3%;
+
+    // Forces on <p/> and <hx/> elements as several mail clients does not
+    // correctly inherit font properties
+    &, p {
+        font-size: 14px; // force bootstrap default
+    }
+    &, p, h1, h2, h3, h4, h5, h6 {
+        font-family: @o_mm_def_font;
+        color: lighten(@o_mm_def_text_color, 20%);
+    }
 
     > .o_mail_wrapper {
         width: 100%;
-        max-width: @o_mm_def_body_width;
-        margin: auto;
-        border: 1px solid darken(@o_mm_def_color_alpha, 2%);
-        background-color: @o_mm_def_color_beta;
+        margin: 24px 0;
+        border-collapse: separate; // Allow the first and last td to have the
+                                   // same width
+
+        .o_mail_wrapper_td {
+            width: @o_mm_def_body_width;
+            border: 1px solid darken(@o_mm_def_color_alpha, 2%);
+            background-color: @o_mm_def_color_beta;
+        }
     }
 }
 
 // ===== Snippets (general) =====
 .o_mail_snippet_general {
     width: 100%;
-    max-width: @o_mm_def_body_width;
+    max-width: @o_mm_def_body_width; // should not be necessary thanks to mail wrapper
     margin: 0 auto;
 
     h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
@@ -157,7 +164,11 @@
 }
 
 .o_mail_block_two_cols, .o_mail_block_three_cols {
-    font-size: small;
+    // Forces on <p/> elements as several mail clients does not correctly
+    // inherit font properties
+    &, p {
+        font-size: small;
+    }
 
     .o_mail_col_container {
         padding: 10px 20px;
@@ -169,7 +180,11 @@
 }
 
 .o_mail_block_image_text, .o_mail_block_text_image {
-    font-size: small;
+    // Forces on <p/> elements as several mail clients does not correctly
+    // inherit font properties
+    &, p {
+        font-size: small;
+    }
 }
 
 .o_mail_block_event {
@@ -302,31 +317,11 @@
     }
 }
 
-// ===== Margins on td (replaced by paddings) =====
-.o-paddings-all(@factor: 1) {
-    .o-paddings(128, @factor);
-    .o-paddings(96, @factor);
-    .o-paddings(92, @factor);
-    .o-paddings(64, @factor);
-    .o-paddings(48, @factor);
-    .o-paddings(32, @factor);
-    .o-paddings(24, @factor);
-    .o-paddings(16, @factor);
-    .o-paddings(8, @factor);
-    .o-paddings(4, @factor);
-    .o-paddings(0, @factor);
+// Compatibility: mb/mt classes on <td/> elements were interpreted as paddings
+// instead of margins before the introduction of pb/pt classes. As thoses mb/mt
+// classes may remain on clients' templates, <td/> are forced to 0 margin to
+// be sure (normally <td/> should not consider margin properties but some mail
+// clients might make the mistake to do so).
+td[class*="mb"], td[class*="mt"] {
+    margin: 0!important;
 }
-.o-paddings(@name, @factor: 1) {
-    .o-paddings-define(@name, @factor * @name);
-}
-.o-paddings-define(@name, @size: @name) {
-    td.mt@{name} {
-        margin-top: auto!important;
-        padding-top: ~"@{size}px"!important;
-    }
-    td.mb@{name} {
-        margin-bottom: auto!important;
-        padding-bottom: ~"@{size}px"!important;
-    }
-}
-.o-paddings-all();

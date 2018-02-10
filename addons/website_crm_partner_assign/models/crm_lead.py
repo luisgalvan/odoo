@@ -3,9 +3,9 @@
 
 import random
 
-from odoo.addons.base_geolocalize.models.res_partner import geo_find, geo_query_address
 from odoo import api, fields, models, _
-
+from odoo.addons.base_geolocalize.models.res_partner import geo_find, geo_query_address
+from odoo.exceptions import AccessDenied
 
 class CrmLead(models.Model):
     _inherit = "crm.lead"
@@ -47,8 +47,6 @@ class CrmLead(models.Model):
         for salesman_id, leads_ids in salesmans_leads.items():
             leads = self.browse(leads_ids)
             leads.write({'user_id': salesman_id})
-            for lead in leads:
-                lead._onchange_user_id()
 
     @api.multi
     def action_assign_partner(self):
@@ -218,7 +216,7 @@ class CrmLead(models.Model):
             if tag_spam and tag_spam not in self.tag_ids:
                 values['tag_ids'] = [(4, tag_spam.id, False)]
         if partner_ids:
-            values['partner_declined_ids'] = map(lambda p: (4, p, 0), partner_ids.ids)
+            values['partner_declined_ids'] = [(4, p, 0) for p in partner_ids.ids]
         self.sudo().write(values)
 
     @api.multi
@@ -256,9 +254,10 @@ class CrmLead(models.Model):
 
     @api.model
     def create_opp_portal(self, values):
-        if self.env.user.partner_id.grade_id or self.env.user.commercial_partner_id.grade_id:
-            user = self.env.user
-            self = self.sudo()
+        if not (self.env.user.partner_id.grade_id or self.env.user.commercial_partner_id.grade_id):
+            raise AccessDenied()
+        user = self.env.user
+        self = self.sudo()
         if not (values['contact_name'] and values['description'] and values['title']):
             return {
                 'errors': _('All fields are required !')
@@ -269,7 +268,7 @@ class CrmLead(models.Model):
             'name': values['title'],
             'description': values['description'],
             'priority': '2',
-            'partner_assigned_id': user.partner_id.id,
+            'partner_assigned_id': user.commercial_partner_id.id,
         }
         if tag_own:
             values['tag_ids'] = [(4, tag_own.id, False)]

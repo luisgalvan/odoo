@@ -4,8 +4,7 @@
 from odoo.tests import common
 
 
-@common.at_install(False)
-@common.post_install(True)
+@common.tagged('post_install','-at_install')
 class base_automation_test(common.TransactionCase):
 
     def setUp(self):
@@ -91,6 +90,30 @@ class base_automation_test(common.TransactionCase):
         partner.write({'customer': True})
         self.assertTrue(lead.customer, "Customer field should updated to True")
         self.assertEqual(lead.user_id, self.user_demo, "Responsible should be change on write of Lead when Customer becomes True.")
+
+    def test_11_recomputed_field(self):
+        """
+        Check that a rule is executed whenever a field is recomputed and the
+        context contains the target field
+        """
+        partner = self.env.ref('base.res_partner_1')
+        lead = self.create_lead(state='draft', partner_id=partner.id)
+        self.assertFalse(lead.deadline, 'There should not be a deadline defined')
+        # change priority and user; this triggers deadline recomputation, and
+        # the server action should set the boolean field to True
+        lead.write({'priority': True, 'user_id': self.user_admin.id})
+        self.assertTrue(lead.deadline, 'Deadline should be defined')
+        self.assertTrue(lead.is_assigned_to_admin, 'Lead should be assigned to admin')
+
+    def test_12_recursive(self):
+        """ Check that a rule is executed recursively by a secondary change. """
+        lead = self.create_lead(state='open')
+        self.assertEqual(lead.state, 'open')
+        self.assertEqual(lead.user_id, self.user_admin)
+        # change partner; this should trigger the rule that modifies the state
+        partner = self.env.ref('base.res_partner_1')
+        lead.write({'partner_id': partner.id})
+        self.assertEqual(lead.state, 'draft')
 
     def test_20_direct_line(self):
         """

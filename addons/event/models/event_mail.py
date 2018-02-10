@@ -77,7 +77,7 @@ class EventMailScheduler(models.Model):
         if self.interval_type in ['before_event', 'after_event']:
             self.done = self.mail_sent
         else:
-            self.done = len(self.mail_registration_ids) == len(self.event_id.registration_ids) and all(filter(lambda line: line.mail_sent, self.mail_registration_ids))
+            self.done = len(self.mail_registration_ids) == len(self.event_id.registration_ids) and all(mail.mail_sent for mail in self.mail_registration_ids)
 
     @api.one
     @api.depends('event_id.state', 'event_id.date_begin', 'interval_type', 'interval_unit', 'interval_nbr')
@@ -96,18 +96,20 @@ class EventMailScheduler(models.Model):
 
     @api.one
     def execute(self):
+        now = fields.Datetime.now()
         if self.interval_type == 'after_sub':
             # update registration lines
-            lines = []
-            reg_ids = [mail_reg.registration_id for mail_reg in self.mail_registration_ids]
-            for registration in filter(lambda item: item not in reg_ids, self.event_id.registration_ids):
-                lines.append((0, 0, {'registration_id': registration.id}))
+            lines = [
+                (0, 0, {'registration_id': registration.id})
+                for registration in (self.event_id.registration_ids - self.mapped('mail_registration_ids.registration_id'))
+            ]
             if lines:
                 self.write({'mail_registration_ids': lines})
             # execute scheduler on registrations
-            self.mail_registration_ids.filtered(lambda reg: reg.scheduled_date and reg.scheduled_date <= datetime.strftime(fields.datetime.now(), tools.DEFAULT_SERVER_DATETIME_FORMAT)).execute()
+            self.mail_registration_ids.filtered(lambda reg: reg.scheduled_date and reg.scheduled_date <= now).execute()
         else:
-            if not self.mail_sent:
+            # Do not send emails if the mailing was scheduled before the event but the event is over
+            if not self.mail_sent and (self.interval_type != 'before_event' or self.event_id.date_end > now):
                 self.event_id.mail_attendees(self.template_id.id)
                 self.write({'mail_sent': True})
         return True

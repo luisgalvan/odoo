@@ -4,6 +4,7 @@
 import itertools
 
 from odoo.tests import common
+from odoo.tools import pycompat
 
 
 class CreatorCase(common.TransactionCase):
@@ -68,7 +69,7 @@ class test_integer_field(CreatorCase):
     def test_huge(self):
         self.assertEqual(
             self.export(2**31-1),
-            [[unicode(2**31-1)]])
+            [[pycompat.text_type(2**31-1)]])
 
 
 class test_float_field(CreatorCase):
@@ -318,7 +319,7 @@ class test_m2o(CreatorCase):
         record = self.env['export.integer'].create({'value': 42})
         self.assertEqual(
             self.export(record.id, fields=['value/.id', 'value/value']),
-            [[unicode(record.id), u'42']])
+            [[pycompat.text_type(record.id), u'42']])
 
     def test_external_id(self):
         record = self.env['export.integer'].create({'value': 42})
@@ -381,9 +382,13 @@ class test_o2m(CreatorCase):
     def test_multiple_records_name(self):
         self.assertEqual(
             self.export(self.commands, fields=['const', 'value']),
-            [[
-                u'4', u','.join(self.names)
-            ]])
+            [
+                [u'4', u'export.one2many.child:4'],
+                [u'', u'export.one2many.child:42'],
+                [u'', u'export.one2many.child:36'],
+                [u'', u'export.one2many.child:4'],
+                [u'', u'export.one2many.child:13'],
+            ])
 
     def test_multiple_records_id(self):
         export = self.export(self.commands, fields=['const', 'value/.id'])
@@ -401,19 +406,23 @@ class test_o2m(CreatorCase):
     def test_multiple_records_with_name_before(self):
         self.assertEqual(
             self.export(self.commands, fields=['const', 'value', 'value/value']),
-            [[ # exports sub-fields of very first o2m
-                u'4', u','.join(self.names), u'4'
-            ]])
+            [
+                [u'4', u'export.one2many.child:4', u'4'],
+                ['', u'export.one2many.child:42', u'42'],
+                ['', u'export.one2many.child:36', u'36'],
+                ['', u'export.one2many.child:4', u'4'],
+                ['', u'export.one2many.child:13', u'13'],
+            ])
 
     def test_multiple_records_with_name_after(self):
         self.assertEqual(
             self.export(self.commands, fields=['const', 'value/value', 'value']),
-            [ # completely ignores name_get request
-                [u'4', u'4', ''],
-                ['', u'42', ''],
-                ['', u'36', ''],
-                ['', u'4', ''],
-                ['', u'13', ''],
+            [
+                [u'4', u'4', u'export.one2many.child:4'],
+                ['', u'42', u'export.one2many.child:42'],
+                ['', u'36', u'export.one2many.child:36'],
+                ['', u'4', u'export.one2many.child:4'],
+                ['', u'13', u'export.one2many.child:13'],
             ])
 
     def test_multiple_subfields_neighbour(self):
@@ -494,9 +503,9 @@ class test_o2m_multiple(CreatorCase):
         """
         fields = ['const', 'child1/value', 'child2/value']
         child1 = [(0, False, {'value': v, 'str': 'record%.02d' % index})
-                  for index, v in zip(itertools.count(), [4, 42, 36, 4, 13])]
+                  for index, v in pycompat.izip(itertools.count(), [4, 42, 36, 4, 13])]
         child2 = [(0, False, {'value': v, 'str': 'record%.02d' % index})
-                  for index, v in zip(itertools.count(10), [8, 12, 8, 55, 33, 13])]
+                  for index, v in pycompat.izip(itertools.count(10), [8, 12, 8, 55, 33, 13])]
 
         self.assertEqual(
             self.export(child1=child1, child2=False, fields=fields),
@@ -584,10 +593,13 @@ class test_m2m(CreatorCase):
     def test_multiple_records_name(self):
         self.assertEqual(
             self.export(self.commands, fields=['const', 'value']),
-            [[ # FIXME: hardcoded comma, import uses config.csv_internal_sep
-               # resolution: remove configurable csv_internal_sep
-                u'4', u','.join(self.names)
-            ]])
+            [
+                [u'4', u'export.many2many.other:4'],
+                ['', u'export.many2many.other:42'],
+                ['', u'export.many2many.other:36'],
+                ['', u'export.many2many.other:4'],
+                ['', u'export.many2many.other:13'],
+            ])
 
     # essentially same as o2m, so boring
 

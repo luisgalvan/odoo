@@ -2,13 +2,8 @@ odoo.define('web_settings_dashboard', function (require) {
 "use strict";
 
 var core = require('web.core');
-var Widget = require('web.Widget');
-var Model = require('web.Model');
-var session = require('web.session');
-var PlannerCommon = require('web.planner.common');
 var framework = require('web.framework');
-var webclient = require('web.web_client');
-var PlannerDialog = PlannerCommon.PlannerDialog;
+var Widget = require('web.Widget');
 
 var QWeb = core.qweb;
 var _t = core._t;
@@ -16,8 +11,8 @@ var _t = core._t;
 var Dashboard = Widget.extend({
     template: 'DashboardMain',
 
-    init: function(parent, data){
-        this.all_dashboards = ['apps', 'invitations', 'planner', 'share'];
+    init: function(){
+        this.all_dashboards = ['apps', 'invitations', 'share', 'translations', 'company'];
         return this._super.apply(this, arguments);
     },
 
@@ -28,21 +23,22 @@ var Dashboard = Widget.extend({
     load: function(dashboards){
         var self = this;
         var loading_done = new $.Deferred();
-        session.rpc("/web_settings_dashboard/data", {}).then(function (data) {
-            // Load each dashboard
-            var all_dashboards_defs = [];
-            _.each(dashboards, function(dashboard) {
-                var dashboard_def = self['load_' + dashboard](data);
-                if (dashboard_def) {
-                    all_dashboards_defs.push(dashboard_def);
-                }
-            });
+        this._rpc({route: '/web_settings_dashboard/data'})
+            .then(function (data) {
+                // Load each dashboard
+                var all_dashboards_defs = [];
+                _.each(dashboards, function(dashboard) {
+                    var dashboard_def = self['load_' + dashboard](data);
+                    if (dashboard_def) {
+                        all_dashboards_defs.push(dashboard_def);
+                    }
+                });
 
-            // Resolve loading_done when all dashboards defs are resolved
-            $.when.apply($, all_dashboards_defs).then(function() {
-                loading_done.resolve();
+                // Resolve loading_done when all dashboards defs are resolved
+                $.when.apply($, all_dashboards_defs).then(function() {
+                    loading_done.resolve();
+                });
             });
-        });
         return loading_done;
     },
 
@@ -58,9 +54,13 @@ var Dashboard = Widget.extend({
         return new DashboardInvitations(this, data.users_info).replace(this.$('.o_web_settings_dashboard_invitations'));
     },
 
-    load_planner: function(data){
-        return  new DashboardPlanner(this, data.planner).replace(this.$('.o_web_settings_dashboard_planner'));
+    load_translations: function (data) {
+        return new DashboardTranslations(this, data.translations).replace(this.$('.o_web_settings_dashboard_translations'));
     },
+
+    load_company: function (data) {
+        return new DashboardCompany(this, data.company).replace(this.$('.o_web_settings_dashboard_company'));
+    }
 });
 
 var DashboardInvitations = Widget.extend({
@@ -91,8 +91,11 @@ var DashboardInvitations = Widget.extend({
             $target.prop('disabled', true);
             $target.find('i.fa-cog').removeClass('hidden');
             // Try to create user accountst
-            new Model("res.users")
-                .call("web_dashboard_create_users", [user_emails])
+            this._rpc({
+                    model: 'res.users',
+                    method: 'web_dashboard_create_users',
+                    args: [user_emails],
+                })
                 .then(function() {
                     self.reload();
                 })
@@ -147,68 +150,6 @@ var DashboardInvitations = Widget.extend({
     },
     reload:function(){
         return this.parent.load(['invitations']);
-    },
-});
-
-var DashboardPlanner = Widget.extend({
-
-    template: 'DashboardPlanner',
-
-    events: {
-        'click .o_web_settings_dashboard_planner_progress_bar': 'on_planner_clicked',
-    },
-
-    init: function(parent, data){
-        this.data = data;
-        this.parent = parent;
-        this.planner_by_menu = {};
-        this._super.apply(this, arguments);
-    },
-
-    willStart: function () {
-        var self = this;
-        return new Model('web.planner').query().all().then(function(res) {
-            self.planners = res;
-            _.each(self.planners, function(planner) {
-                self.planner_by_menu[planner.menu_id[0]] = planner;
-                self.planner_by_menu[planner.menu_id[0]].data = $.parseJSON(planner.data) || {};
-            });
-            self.set_overall_progress();
-        });
-    },
-
-    update_planner_progress: function(){
-        this.set_overall_progress();
-        this.$('.o_web_settings_dashboard_planners_list').replaceWith(
-            QWeb.render("DashboardPlanner.PlannersList", {'planners': this.planners})
-        );
-    },
-
-    set_overall_progress: function(){
-        var self = this;
-        this.sort_planners_list();
-        var average = _.reduce(self.planners, function(memo, planner) {
-            return planner.progress + memo;
-        }, 0) / (self.planners.length || 1);
-        self.overall_progress = Math.floor(average);
-        self.$('.o_web_settings_dashboard_planner_overall_progress').text(self.overall_progress);
-    },
-
-    sort_planners_list: function(){
-        // sort planners alphabetically but with fully completed planners at the end:
-        this.planners = _.sortBy(this.planners, function(planner){return (planner.progress >= 100) + planner.name;});
-    },
-
-    on_planner_clicked: function (e) {
-        var menu_id = $(e.currentTarget).attr('data-menu-id');
-        this.planner = this.planner_by_menu[menu_id];
-
-        this.dialog = new PlannerDialog(this, undefined, this.planner);
-        this.dialog.on("planner_progress_changed", this, function(percent) {
-            this.planner.progress = percent;
-            this.update_planner_progress();
-        });
-        this.dialog.open();
     },
 });
 
@@ -282,13 +223,61 @@ var DashboardShare = Widget.extend({
     }
 });
 
+var DashboardTranslations = Widget.extend({
+    template: 'DashboardTranslations',
+
+    events: {
+        'click .o_load_translations': 'on_load_translations'
+    },
+
+    on_load_translations: function () {
+        this.do_action('base.action_view_base_language_install');
+    }
+
+});
+
+var DashboardCompany = Widget.extend({
+    template: 'DashboardCompany',
+
+    events: {
+        'click .o_setup_company': 'on_setup_company'
+    },
+
+    init: function (parent, data) {
+        this.data = data;
+        this.parent = parent;
+        this._super.apply(this, arguments);
+    },
+
+    on_setup_company: function () {
+        var self = this;
+        var action = {
+            type: 'ir.actions.act_window',
+            res_model: 'res.company',
+            view_mode: 'form',
+            view_type: 'form',
+            views: [[false, 'form']],
+            res_id: this.data.company_id
+        };
+        this.do_action(action, {
+            on_reverse_breadcrumb: function () { return self.reload(); }
+        });
+    },
+
+    reload: function () {
+        return this.parent.load(['company']);
+    }
+});
+
 core.action_registry.add('web_settings_dashboard.main', Dashboard);
 
 return {
     Dashboard: Dashboard,
+    DashboardApps: DashboardApps,
     DashboardInvitations: DashboardInvitations,
-    DashboardPlanner: DashboardPlanner,
     DashboardShare: DashboardShare,
+    DashboardTranslations: DashboardTranslations,
+    DashboardCompany: DashboardCompany
 };
 
 });

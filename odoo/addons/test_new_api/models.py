@@ -4,15 +4,22 @@
 import datetime
 
 from odoo import models, fields, api, _
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, ValidationError
+from odoo.tools import pycompat
 
 
 class Category(models.Model):
     _name = 'test_new_api.category'
+    _order = 'name'
+    _parent_store = True
+    _parent_name = 'parent'
+    _parent_order = 'name'
 
     name = fields.Char(required=True)
     color = fields.Integer('Color Index')
-    parent = fields.Many2one('test_new_api.category')
+    parent = fields.Many2one('test_new_api.category', ondelete='cascade')
+    parent_left = fields.Integer("Left Parent", index=True)
+    parent_right = fields.Integer("Right Parent", index=True)
     root_categ = fields.Many2one(_name, compute='_compute_root_categ')
     display_name = fields.Char(compute='_compute_display_name', inverse='_inverse_display_name')
     dummy = fields.Char(store=False)
@@ -45,7 +52,7 @@ class Category(models.Model):
             categories.append(category[0])
         categories.append(self)
         # assign parents following sequence
-        for parent, child in zip(categories, categories[1:]):
+        for parent, child in pycompat.izip(categories, categories[1:]):
             if parent and child:
                 child.parent = parent
         # assign name of last category, and reassign display_name (to normalize it)
@@ -81,6 +88,20 @@ class Discussion(models.Model):
     def _domain_very_important(self):
         """Ensure computed O2M domains work as expected."""
         return [("important", "=", True)]
+
+    @api.onchange('name')
+    def _onchange_name(self):
+        # test onchange modifying one2many field values
+        if self.env.context.get('generate_dummy_message') and self.name == '{generate_dummy_message}':
+            # update body of existings messages and emails
+            for message in self.messages:
+                message.body = 'not last dummy message'
+            for message in self.important_messages:
+                message.body = 'not last dummy message'
+            # add new dummy message
+            message_vals = self.messages._add_missing_default_values({'body': 'dummy message', 'important': True})
+            self.messages |= self.messages.new(message_vals)
+            self.important_messages |= self.messages.new(message_vals)
 
     @api.onchange('moderator')
     def _onchange_moderator(self):
@@ -154,7 +175,7 @@ class Message(models.Model):
     @api.one
     @api.depends('author', 'author.partner_id')
     def _compute_author_partner(self):
-        self.author_partner = author.partner_id
+        self.author_partner = self.author.partner_id
 
     @api.model
     def _search_author_partner(self, operator, value):
@@ -197,6 +218,13 @@ class MultiLine(models.Model):
     multi = fields.Many2one('test_new_api.multi', ondelete='cascade')
     name = fields.Char()
     partner = fields.Many2one('res.partner')
+    tags = fields.Many2many('test_new_api.multi.tag')
+
+
+class MultiTag(models.Model):
+    _name = 'test_new_api.multi.tag'
+
+    name = fields.Char()
 
 
 class Edition(models.Model):
@@ -272,7 +300,7 @@ class Foo(models.Model):
     _name = 'test_new_api.foo'
 
     name = fields.Char()
-    value1 = fields.Integer()
+    value1 = fields.Integer(change_default=True)
     value2 = fields.Integer()
 
 
@@ -295,31 +323,115 @@ class Related(models.Model):
 
     name = fields.Char()
     # related fields with a single field
-    related_name = fields.Char(related='name')
-    related_related_name = fields.Char(related='related_name')
+    related_name = fields.Char(related='name', string='A related on Name')
+    related_related_name = fields.Char(related='related_name', string='A related on a related on Name')
+
+
+class ComputeProtected(models.Model):
+    _name = 'test_new_api.compute.protected'
+
+    foo = fields.Char(default='')
+    bar = fields.Char(compute='_compute_bar', store=True)
+
+    @api.depends('foo')
+    def _compute_bar(self):
+        for record in self:
+            record.bar = record.foo
 
 
 class ComputeInverse(models.Model):
     _name = 'test_new_api.compute.inverse'
-
-    counts = {'compute': 0, 'inverse': 0}
 
     foo = fields.Char()
     bar = fields.Char(compute='_compute_bar', inverse='_inverse_bar', store=True)
 
     @api.depends('foo')
     def _compute_bar(self):
-        self.counts['compute'] += 1
+        self._context.get('log', []).append('compute')
         for record in self:
             record.bar = record.foo
 
     def _inverse_bar(self):
-        self.counts['inverse'] += 1
+        self._context.get('log', []).append('inverse')
         for record in self:
             record.foo = record.bar
+
+
+class MultiComputeInverse(models.Model):
+    """ Model with the same inverse method for several fields. """
+    _name = 'test_new_api.multi_compute_inverse'
+
+    foo = fields.Char(default='', required=True)
+    bar1 = fields.Char(compute='_compute_bars', inverse='_inverse_bar1', store=True)
+    bar2 = fields.Char(compute='_compute_bars', inverse='_inverse_bar23', store=True)
+    bar3 = fields.Char(compute='_compute_bars', inverse='_inverse_bar23', store=True)
+
+    @api.depends('foo')
+    def _compute_bars(self):
+        self._context.get('log', []).append('compute')
+        for record in self:
+            substrs = record.foo.split('/') + ['', '', '']
+            record.bar1, record.bar2, record.bar3 = substrs[:3]
+
+    def _inverse_bar1(self):
+        self._context.get('log', []).append('inverse1')
+        for record in self:
+            record.write({'foo': '/'.join([record.bar1, record.bar2, record.bar3])})
+
+    def _inverse_bar23(self):
+        self._context.get('log', []).append('inverse23')
+        for record in self:
+            record.write({'foo': '/'.join([record.bar1, record.bar2, record.bar3])})
 
 
 class CompanyDependent(models.Model):
     _name = 'test_new_api.company'
 
     foo = fields.Char(company_dependent=True)
+
+
+class CompanyDependentAttribute(models.Model):
+    _name = 'test_new_api.company.attr'
+
+    company = fields.Many2one('test_new_api.company')
+    quantity = fields.Integer()
+    bar = fields.Char(compute='_compute_bar', store=True)
+
+    @api.depends('quantity', 'company.foo')
+    def _compute_bar(self):
+        for record in self:
+            record.bar = (record.company.foo or '') * record.quantity
+
+
+class ComputeRecursive(models.Model):
+    _name = 'test_new_api.recursive'
+
+    name = fields.Char(required=True)
+    parent = fields.Many2one('test_new_api.recursive', ondelete='cascade')
+    display_name = fields.Char(compute='_compute_display_name', store=True)
+
+    @api.depends('name', 'parent.display_name')
+    def _compute_display_name(self):
+        for rec in self:
+            if rec.parent:
+                rec.display_name = rec.parent.display_name + " / " + rec.name
+            else:
+                rec.display_name = rec.name
+
+
+class ComputeCascade(models.Model):
+    _name = 'test_new_api.cascade'
+
+    foo = fields.Char()
+    bar = fields.Char(compute='_compute_bar')               # depends on foo
+    baz = fields.Char(compute='_compute_baz', store=True)   # depends on bar
+
+    @api.depends('foo')
+    def _compute_bar(self):
+        for record in self:
+            record.bar = "[%s]" % (record.foo or "")
+
+    @api.depends('bar')
+    def _compute_baz(self):
+        for record in self:
+            record.baz = "<%s>" % (record.bar or "")

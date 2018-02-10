@@ -12,6 +12,7 @@ from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models, SUPERUSER_ID
 from odoo.modules.registry import Registry
+from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
 from odoo.tools.safe_eval import safe_eval
 
 _logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ class BaseAutomation(models.Model):
         ('on_unlink', 'On Deletion'),
         ('on_change', 'Based on Form Modification'),
         ('on_time', 'Based on Timed Condition')
-        ], string='Trigger condition', required=True, oldname="kind")
+        ], string='Trigger Condition', required=True, oldname="kind")
     trg_date_id = fields.Many2one('ir.model.fields', string='Trigger Date',
                                   help="""When should the condition be triggered.
                                   If present, will be checked by the scheduler. If empty, will be checked at creation and update.""",
@@ -57,7 +58,7 @@ class BaseAutomation(models.Model):
                                             help="When calculating a day-based timed condition, it is possible to use a calendar to compute the date based on working days.")
     filter_pre_domain = fields.Char(string='Before Update Domain',
                                     help="If present, this condition must be satisfied before the update of the record.")
-    filter_domain = fields.Char(string='Domain', help="If present, this condition must be satisfied before executing the action rule.")
+    filter_domain = fields.Char(string='Apply on', help="If present, this condition must be satisfied before executing the action rule.")
     last_run = fields.Datetime(readonly=True, copy=False)
     on_change_fields = fields.Char(string="On Change Fields Trigger", help="Comma-separated list of field names that triggers the onchange.")
 
@@ -114,7 +115,7 @@ class BaseAutomation(models.Model):
             self._cr.commit()
             self.env.reset()
             registry = Registry.new(self._cr.dbname)
-            registry.signal_registry_change()
+            registry.registry_invalidated = True
 
     def _get_actions(self, records, triggers):
         """ Return the actions of the given triggers for records' model. The
@@ -156,13 +157,18 @@ class BaseAutomation(models.Model):
 
     def _process(self, records):
         """ Process action ``self`` on the ``records`` that have not been done yet. """
-        # filter out the records on which self has already been done, then mark
-        # remaining records as done (to avoid recursive processing)
+        # filter out the records on which self has already been done
         action_done = self._context['__action_done']
-        records -= action_done.setdefault(self, records.browse())
+        records_done = action_done.get(self, records.browse())
+        records -= records_done
         if not records:
             return
-        action_done[self] |= records
+
+        # mark the remaining records as done (to avoid recursive processing)
+        action_done = dict(action_done)
+        action_done[self] = records_done + records
+        self = self.with_context(__action_done=action_done)
+        records = records.with_context(__action_done=action_done)
 
         # modify records
         values = {}
@@ -258,7 +264,7 @@ class BaseAutomation(models.Model):
                 if res:
                     if 'value' in res:
                         res['value'].pop('id', None)
-                        self.update({key: val for key, val in res['value'].iteritems() if key in self._fields})
+                        self.update({key: val for key, val in res['value'].items() if key in self._fields})
                     if 'domain' in res:
                         result.setdefault('domain', {}).update(res['domain'])
                     if 'warning' in res:
@@ -276,7 +282,15 @@ class BaseAutomation(models.Model):
 
         # retrieve all actions, and patch their corresponding model
         for action_rule in self.with_context({}).search([]):
-            Model = self.env[action_rule.model_name]
+            Model = self.env.get(action_rule.model_name)
+
+            # Do not crash if the model of the base_action_rule was uninstalled
+            if Model is None:
+                _logger.warning("Action rule with ID %d depends on model %s" %
+                                (action_rule.id,
+                                 action_rule.model_name))
+                continue
+
             if action_rule.trigger == 'on_create':
                 patch(Model, 'create', make_create())
 
@@ -301,7 +315,7 @@ class BaseAutomation(models.Model):
         if action.trg_date_calendar_id and action.trg_date_range_type == 'day':
             return action.trg_date_calendar_id.plan_days(
                 action.trg_date_range,
-                day_date=fields.Datetime.from_string(record_dt),
+                fields.Datetime.from_string(record_dt),
                 compute_leaves=True,
             )
         else:
@@ -345,7 +359,7 @@ class BaseAutomation(models.Model):
                     except Exception:
                         _logger.error(traceback.format_exc())
 
-            action.write({'last_run': fields.Datetime.now()})
+            action.write({'last_run': now.strftime(DEFAULT_SERVER_DATETIME_FORMAT)})
 
             if automatic:
                 # auto-commit for batch processing

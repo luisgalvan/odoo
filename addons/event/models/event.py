@@ -44,7 +44,7 @@ class EventType(models.Model):
         help="It will select this default maximum value when you choose this event")
     auto_confirm = fields.Boolean(
         'Automatically Confirm Registrations', default=True,
-        help="Events and registrations will automatically be confirmed"
+        help="Events and registrations will automatically be confirmed "
              "upon creation, easing the flow for simple events.")
     # location
     is_online = fields.Boolean(
@@ -54,8 +54,6 @@ class EventType(models.Model):
         '_tz_get', string='Timezone',
         default=lambda self: self.env.user.tz)
     # communication
-    use_reply_to = fields.Boolean('Use Default Reply-To')
-    default_reply_to = fields.Char('Reply To')
     use_hashtag = fields.Boolean('Use Default Hashtag')
     default_hashtag = fields.Char('Twitter Hashtag')
     use_mail_schedule = fields.Boolean(
@@ -84,7 +82,7 @@ class EventEvent(models.Model):
     _order = 'date_begin'
 
     name = fields.Char(
-        string='Event Name', translate=True, required=True,
+        string='Event', translate=True, required=True,
         readonly=False, states={'done': [('readonly', True)]})
     active = fields.Boolean(default=True)
     user_id = fields.Many2one(
@@ -139,7 +137,7 @@ class EventEvent(models.Model):
         'event.registration', 'event_id', string='Attendees',
         readonly=False, states={'done': [('readonly', True)]})
     # Date fields
-    date_tz = fields.Selection('_tz_get', string='Timezone', required=True, default=lambda self: self.env.user.tz)
+    date_tz = fields.Selection('_tz_get', string='Timezone', required=True, default=lambda self: self.env.user.tz or 'UTC')
     date_begin = fields.Datetime(
         string='Start Date', required=True,
         track_visibility='onchange', states={'done': [('readonly', True)]})
@@ -155,9 +153,6 @@ class EventEvent(models.Model):
         string='Status', default='draft', readonly=True, required=True, copy=False,
         help="If event is created, the status is 'Draft'. If event is confirmed for the particular dates the status is set to 'Confirmed'. If the event is over, the status is set to 'Done'. If event is cancelled the status is set to 'Cancelled'.")
     auto_confirm = fields.Boolean(string='Autoconfirm Registrations')
-    reply_to = fields.Char(
-        'Reply-To Email', readonly=False, states={'done': [('readonly', True)]},
-        help="The email address of the organizer is likely to be put here, with the effect to be in the 'Reply-To' of the mails sent automatically at event or registrations confirmation. You can also put the email address of your mail gateway if you use one.")
     is_online = fields.Boolean('Online Event')
     address_id = fields.Many2one(
         'res.partner', string='Location',
@@ -213,7 +208,7 @@ class EventEvent(models.Model):
     @api.depends('date_tz', 'date_begin')
     def _compute_date_begin_tz(self):
         if self.date_begin:
-            self.date_begin_located = format_tz(self.with_context({'use_babel': True}).env, self.date_begin, tz=self.date_tz)
+            self.date_begin_located = format_tz(self.with_context(use_babel=True).env, self.date_begin, tz=self.date_tz)
         else:
             self.date_begin_located = False
 
@@ -221,7 +216,7 @@ class EventEvent(models.Model):
     @api.depends('date_tz', 'date_end')
     def _compute_date_end_tz(self):
         if self.date_end:
-            self.date_end_located = format_tz(self.with_context({'use_babel': True}).env, self.date_end, tz=self.date_tz)
+            self.date_end_located = format_tz(self.with_context(use_babel=True).env, self.date_end, tz=self.date_tz)
         else:
             self.date_end_located = False
 
@@ -236,10 +231,7 @@ class EventEvent(models.Model):
             if self.event_type_id.auto_confirm:
                 self.auto_confirm = self.event_type_id.auto_confirm
 
-            if self.event_type_id.use_reply_to:
-                self.reply_to = self.event_type_id.default_reply_to
-
-            if self.event_type_id.use_reply_to:
+            if self.event_type_id.use_hashtag:
                 self.twitter_hashtag = self.event_type_id.default_hashtag
 
             if self.event_type_id.use_timezone:
@@ -299,6 +291,13 @@ class EventEvent(models.Model):
             self.message_subscribe([vals['organizer_id']])
         return res
 
+    @api.multi
+    @api.returns('self', lambda value: value.id)
+    def copy(self, default=None):
+        self.ensure_one()
+        default = dict(default or {}, name=_("%s (copy)") % (self.name))
+        return super(EventEvent, self).copy(default)
+
     @api.one
     def button_draft(self):
         self.state = 'draft'
@@ -319,9 +318,13 @@ class EventEvent(models.Model):
         self.state = 'confirm'
 
     @api.one
-    def mail_attendees(self, template_id, force_send=False, filter_func=lambda self: True):
+    def mail_attendees(self, template_id, force_send=False, filter_func=lambda self: self.state != 'cancel'):
         for attendee in self.registration_ids.filtered(filter_func):
             self.env['mail.template'].browse(template_id).send_mail(attendee.id, force_send=force_send)
+
+    @api.multi
+    def _is_event_registrable(self):
+        return True
 
 
 class EventRegistration(models.Model):
@@ -329,7 +332,6 @@ class EventRegistration(models.Model):
     _description = 'Attendee'
     _inherit = ['mail.thread']
     _order = 'name, create_date desc'
-    _mail_mass_mailing = _('Event Attendees')
 
     origin = fields.Char(
         string='Source Document', readonly=True,
@@ -393,7 +395,7 @@ class EventRegistration(models.Model):
             'partner_id': partner_id.id,
             'event_id': event_id and event_id.id or False,
         }
-        data.update({key: registration[key] for key in registration.keys() if key in self._fields})
+        data.update({key: value for key, value in registration.items() if key in self._fields})
         return data
 
     @api.one
@@ -447,6 +449,20 @@ class EventRegistration(models.Model):
             pass
         return recipients
 
+    def _message_post_after_hook(self, message, values, notif_layout):
+        if self.email and not self.partner_id:
+            # we consider that posting a message with a specified recipient (not a follower, a specific one)
+            # on a document without customer means that it was created through the chatter using
+            # suggested recipients. This heuristic allows to avoid ugly hacks in JS.
+            new_partner = message.partner_ids.filtered(lambda partner: partner.email == self.email)
+            if new_partner:
+                self.search([
+                    ('partner_id', '=', False),
+                    ('email', '=', new_partner.email),
+                    ('state', 'not in', ['cancel']),
+                ]).write({'partner_id': new_partner.id})
+        return super(EventRegistration, self)._message_post_after_hook(message, values, notif_layout)
+
     @api.multi
     def action_send_badge_email(self):
         """ Open a window to compose an email, with the template - 'event_badge'
@@ -492,3 +508,8 @@ class EventRegistration(models.Model):
             return _('next month')
         else:
             return _('on ') + format_tz(self.with_context({'use_babel': True}).env, self.event_begin_date, tz=self.event_id.date_tz or 'UTC')
+
+    @api.multi
+    def summary(self):
+        self.ensure_one()
+        return {'information': []}

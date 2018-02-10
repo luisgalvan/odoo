@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 
+import logging
 
 from ast import literal_eval
 
@@ -8,9 +9,10 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 from odoo.tools.misc import ustr
 
-from odoo.addons.base.ir.ir_mail_server import MailDeliveryException
+from odoo.addons.base.models.ir_mail_server import MailDeliveryException
 from odoo.addons.auth_signup.models.res_partner import SignupError, now
 
+_logger = logging.getLogger(__name__)
 
 class ResUsers(models.Model):
     _inherit = 'res.users'
@@ -82,8 +84,8 @@ class ResUsers(models.Model):
 
         # check that uninvited users may sign up
         if 'partner_id' not in values:
-            if not literal_eval(get_param('auth_signup.allow_uninvited', 'False')):
-                raise SignupError('Signup is not allowed for uninvited users')
+            if get_param('auth_signup.invitation_scope', 'b2b') != 'b2c':
+                raise SignupError(_('Signup is not allowed for uninvited users'))
 
         assert values.get('login'), "Signup: no login given for new user"
         assert values.get('partner_id') or values.get('name'), "Signup: no name or partner given for new user"
@@ -93,7 +95,7 @@ class ResUsers(models.Model):
         try:
             with self.env.cr.savepoint():
                 return template_user.with_context(no_reset_password=True).copy(values)
-        except Exception, e:
+        except Exception as e:
             # copy may failed if asked login is not available.
             raise SignupError(ustr(e))
 
@@ -134,6 +136,7 @@ class ResUsers(models.Model):
             if not user.email:
                 raise UserError(_("Cannot send email: user %s has no email address.") % user.name)
             template.with_context(lang=user.lang).send_mail(user.id, force_send=True, raise_exception=True)
+            _logger.info("Password reset email sent for user <%s> to <%s>", user.login, user.email)
 
     @api.model
     def create(self, values):
@@ -147,6 +150,7 @@ class ResUsers(models.Model):
         return user
 
     @api.multi
+    @api.returns('self', lambda value: value.id)
     def copy(self, default=None):
         self.ensure_one()
         sup = super(ResUsers, self)

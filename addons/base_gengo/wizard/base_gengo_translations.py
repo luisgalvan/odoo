@@ -31,7 +31,7 @@ class BaseGengoTranslations(models.TransientModel):
         res['authorized_credentials'], gengo = self.gengo_authentication()
         if 'lang_id' in fields:
             res['lang_id'] = self.env['res.lang'].search([
-                ('code', '=', self.env.context.get('lang', 'en_US'))
+                ('code', '=', self.env.context.get('lang') or 'en_US')
             ], limit=1).id
         return res
 
@@ -90,7 +90,7 @@ class BaseGengoTranslations(models.TransientModel):
             )
             gengo.getAccountStats()
             return (True, gengo)
-        except Exception, e:
+        except Exception as e:
             _logger.exception('Gengo connection failed')
             return (False, _("Gengo connection failed with this message:\n``%s``") % e)
 
@@ -277,5 +277,5 @@ class BaseGengoTranslations(models.TransientModel):
                     _logger.info("%s Translation terms have been posted to Gengo successfully", len(term_ids))
                 if not len(term_ids) == limit:
                     break
-        except Exception, e:
+        except Exception as e:
             _logger.error("%s", e)
