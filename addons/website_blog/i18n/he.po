@@ -3,15 +3,14 @@
 # * website_blog
 # 
 # Translators:
-# ExcaliberX <excaliberx@gmail.com>, 2017
-# Leandro Noijovich <eliel.sorcerer@gmail.com>, 2017
+# Yihya Hugirat <hugirat@gmail.com>, 2017
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 10.0\n"
+"Project-Id-Version: Odoo Server 11.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-10 08:44+0000\n"
-"PO-Revision-Date: 2016-10-10 08:44+0000\n"
-"Last-Translator: Leandro Noijovich <eliel.sorcerer@gmail.com>, 2017\n"
+"POT-Creation-Date: 2017-10-24 09:00+0000\n"
+"PO-Revision-Date: 2017-10-24 09:00+0000\n"
+"Last-Translator: Yihya Hugirat <hugirat@gmail.com>, 2017\n"
 "Language-Team: Hebrew (https://www.transifex.com/odoo/teams/41243/he/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -200,7 +199,7 @@ msgstr ""
 #. module: website_blog
 #: model:ir.ui.view,arch_db:website_blog.website_blog
 msgid "Black"
-msgstr "שחור"
+msgstr ""
 
 #. module: website_blog
 #: model:ir.model.fields,field_description:website_blog.field_blog_post_blog_id
@@ -218,7 +217,8 @@ msgid "Blog Name"
 msgstr ""
 
 #. module: website_blog
-#: code:addons/website_blog/models/website.py:23
+#: code:addons/website_blog/models/website.py:22
+#: code:addons/website_blog/models/website.py:47
 #: model:ir.model,name:website_blog.model_blog_post
 #: model:ir.ui.view,arch_db:website_blog.view_blog_post_form
 #: model:ir.ui.view,arch_db:website_blog.view_blog_post_search
@@ -227,7 +227,13 @@ msgid "Blog Post"
 msgstr ""
 
 #. module: website_blog
-#: code:addons/website_blog/models/website.py:27
+#: code:addons/website_blog/models/website.py:53
+#, python-format
+msgid "Blog Post <b>%s</b> seems to be calling this file !"
+msgstr ""
+
+#. module: website_blog
+#: code:addons/website_blog/models/website.py:28
 #, python-format
 msgid "Blog Post <b>%s</b> seems to have a link to this page !"
 msgstr ""
@@ -240,9 +246,12 @@ msgid "Blog Post Title"
 msgstr ""
 
 #. module: website_blog
+#: code:addons/website_blog/models/website.py:24
+#: code:addons/website_blog/models/website.py:49
 #: model:ir.actions.act_window,name:website_blog.action_blog_post
 #: model:ir.ui.menu,name:website_blog.menu_page
 #: model:ir.ui.view,arch_db:website_blog.view_blog_post_list
+#, python-format
 msgid "Blog Posts"
 msgstr ""
 
@@ -269,7 +278,7 @@ msgstr ""
 #: model:ir.ui.menu,name:website_blog.menu_blog
 #: model:ir.ui.view,arch_db:website_blog.view_blog_blog_list
 msgid "Blogs"
-msgstr "בלוגים"
+msgstr ""
 
 #. module: website_blog
 #: model:ir.ui.view,arch_db:website_blog.website_blog
@@ -348,6 +357,7 @@ msgstr "נוצר ב-"
 
 #. module: website_blog
 #: model:ir.model.fields,field_description:website_blog.field_mail_compose_message_path
+#: model:ir.model.fields,field_description:website_blog.field_mail_mail_path
 #: model:ir.model.fields,field_description:website_blog.field_mail_message_path
 #: model:ir.model.fields,field_description:website_blog.field_survey_mail_compose_message_path
 msgid "Discussion Path"
@@ -361,19 +371,9 @@ msgid "Display Name"
 msgstr "השם המוצג"
 
 #. module: website_blog
-#: model:ir.ui.view,arch_db:website_blog.blog_post_complete
+#: model:ir.ui.view,arch_db:website_blog.blog_edit_options
 msgid "Duplicate"
 msgstr ""
-
-#. module: website_blog
-#: model:ir.model,name:website_blog.model_mail_compose_message
-msgid "Email composition wizard"
-msgstr "אשף יצירת דואר אלקטרוני"
-
-#. module: website_blog
-#: model:ir.model,name:website_blog.model_survey_mail_compose_message
-msgid "Email composition wizard for Survey"
-msgstr "אשף יצירת דואר אלקטרוני לסקר"
 
 #. module: website_blog
 #: model:blog.post,content:website_blog.blog_post_1
@@ -423,7 +423,7 @@ msgstr ""
 #. module: website_blog
 #: model:ir.ui.view,arch_db:website_blog.website_blog
 msgid "Full Screen"
-msgstr ""
+msgstr "מסך מלא"
 
 #. module: website_blog
 #: model:blog.post,content:website_blog.blog_post_1
@@ -525,7 +525,7 @@ msgstr "עודכן לאחרונה על ידי"
 #: model:ir.model.fields,field_description:website_blog.field_blog_blog_write_date
 #: model:ir.model.fields,field_description:website_blog.field_blog_tag_write_date
 msgid "Last Updated on"
-msgstr "עודכן לאחרונה על"
+msgstr "תאריך עדכון אחרון"
 
 #. module: website_blog
 #: model:ir.ui.view,arch_db:website_blog.latest_blogs
@@ -553,7 +553,7 @@ msgstr ""
 #. module: website_blog
 #: model:ir.model,name:website_blog.model_mail_message
 msgid "Message"
-msgstr ""
+msgstr "הודעה"
 
 #. module: website_blog
 #: model:blog.post,content:website_blog.blog_post_1
@@ -593,7 +593,7 @@ msgstr ""
 
 #. module: website_blog
 #. openerp-web
-#: code:addons/website_blog/static/src/js/website_blog.editor.js:21
+#: code:addons/website_blog/static/src/js/website_blog.editor.js:37
 #: model:ir.ui.view,arch_db:website_blog.content_new_blogpost
 #, python-format
 msgid "New Blog Post"
@@ -632,7 +632,7 @@ msgstr ""
 #. module: website_blog
 #: model:ir.ui.view,arch_db:website_blog.website_blog
 msgid "None"
-msgstr "ריק"
+msgstr "אף אחד"
 
 #. module: website_blog
 #: model:blog.post,content:website_blog.blog_post_2
@@ -684,7 +684,7 @@ msgid ""
 msgstr ""
 
 #. module: website_blog
-#: code:addons/website_blog/controllers/main.py:263
+#: code:addons/website_blog/controllers/main.py:270
 #, python-format
 msgid "Public user cannot post comments on blog post."
 msgstr ""
@@ -706,13 +706,13 @@ msgid "Published Post"
 msgstr ""
 
 #. module: website_blog
-#: model:ir.model.fields,field_description:website_blog.field_blog_post_post_date
-msgid "Published date"
+#: model:ir.ui.view,arch_db:website_blog.view_blog_post_form
+msgid "Publishing Options"
 msgstr ""
 
 #. module: website_blog
-#: model:ir.ui.view,arch_db:website_blog.view_blog_post_form
-msgid "Publishing Options"
+#: model:ir.model.fields,field_description:website_blog.field_blog_post_post_date
+msgid "Publishing date"
 msgstr ""
 
 #. module: website_blog
@@ -777,7 +777,7 @@ msgstr ""
 
 #. module: website_blog
 #. openerp-web
-#: code:addons/website_blog/models/website_blog.py:103
+#: code:addons/website_blog/models/website_blog.py:123
 #: code:addons/website_blog/static/src/js/website.tour.blog.js:52
 #, python-format
 msgid "Start writing here..."
@@ -817,13 +817,13 @@ msgstr ""
 #. module: website_blog
 #: sql_constraint:blog.tag:0
 msgid "Tag name already exists !"
-msgstr ""
+msgstr "שם תגית כבר קיים !"
 
 #. module: website_blog
 #: model:ir.model.fields,field_description:website_blog.field_blog_post_tag_ids
 #: model:ir.ui.view,arch_db:website_blog.opt_blog_rc_tags
 msgid "Tags"
-msgstr ""
+msgstr "תגיות"
 
 #. module: website_blog
 #: model:ir.model.fields,field_description:website_blog.field_blog_post_teaser
@@ -838,7 +838,7 @@ msgstr ""
 #. module: website_blog
 #: model:ir.ui.view,arch_db:website_blog.view_blog_post_form
 msgid "Technical"
-msgstr ""
+msgstr "טכני"
 
 #. module: website_blog
 #: model:blog.post,content:website_blog.blog_post_1
@@ -849,6 +849,13 @@ msgstr ""
 #: model:blog.post,name:website_blog.blog_post_1
 #: model:blog.post,website_meta_description:website_blog.blog_post_1
 msgid "The Future of Emails"
+msgstr ""
+
+#. module: website_blog
+#: model:ir.model.fields,help:website_blog.field_blog_post_post_date
+msgid ""
+"The blog post will be visible for your visitors as of this date on the "
+"website if it is set as published."
 msgstr ""
 
 #. module: website_blog
@@ -869,7 +876,7 @@ msgstr ""
 #. module: website_blog
 #: model:ir.model.fields,field_description:website_blog.field_blog_post_name
 msgid "Title"
-msgstr ""
+msgstr "כותרת"
 
 #. module: website_blog
 #: model:blog.post,content:website_blog.blog_post_2
@@ -910,6 +917,7 @@ msgstr ""
 
 #. module: website_blog
 #: model:ir.model.fields,help:website_blog.field_mail_compose_message_path
+#: model:ir.model.fields,help:website_blog.field_mail_mail_path
 #: model:ir.model.fields,help:website_blog.field_mail_message_path
 #: model:ir.model.fields,help:website_blog.field_survey_mail_compose_message_path
 msgid ""
@@ -919,7 +927,7 @@ msgstr ""
 #. module: website_blog
 #: model:ir.model,name:website_blog.model_website
 msgid "Website"
-msgstr "אתר אינטרנט"
+msgstr "אתר"
 
 #. module: website_blog
 #: model:ir.actions.act_url,name:website_blog.action_open_website
@@ -939,7 +947,7 @@ msgstr ""
 #. module: website_blog
 #: model:ir.ui.view,arch_db:website_blog.website_blog
 msgid "White"
-msgstr "לבן"
+msgstr ""
 
 #. module: website_blog
 #: model:ir.ui.view,arch_db:website_blog.opt_blog_rc_about_us
@@ -985,6 +993,11 @@ msgid "comments"
 msgstr ""
 
 #. module: website_blog
+#: model:blog.tag,name:website_blog.blog_tag_1
+msgid "functional"
+msgstr ""
+
+#. module: website_blog
 #: model:ir.ui.view,arch_db:website_blog.blog_post_template_new_post
 msgid "has been published on the"
 msgstr ""
@@ -1008,4 +1021,9 @@ msgstr ""
 #. module: website_blog
 #: model:ir.ui.view,arch_db:website_blog.blog_post_short
 msgid "views"
+msgstr ""
+
+#. module: website_blog
+#: model:blog.tag,name:website_blog.blog_tag_2
+msgid "website"
 msgstr ""

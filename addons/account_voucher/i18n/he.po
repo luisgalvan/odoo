@@ -3,14 +3,15 @@
 # * account_voucher
 # 
 # Translators:
-# ExcaliberX <excaliberx@gmail.com>, 2017
+# Yihya Hugirat <hugirat@gmail.com>, 2017
+# שהאב חוסיין <shhab89@gmail.com>, 2018
 msgid ""
 msgstr ""
-"Project-Id-Version: Odoo Server 10.0c\n"
+"Project-Id-Version: Odoo Server 10.saas~18\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-09-07 08:56+0000\n"
-"PO-Revision-Date: 2016-09-07 08:56+0000\n"
-"Last-Translator: ExcaliberX <excaliberx@gmail.com>, 2017\n"
+"POT-Creation-Date: 2017-09-20 09:52+0000\n"
+"PO-Revision-Date: 2017-09-20 09:52+0000\n"
+"Last-Translator: שהאב חוסיין <shhab89@gmail.com>, 2018\n"
 "Language-Team: Hebrew (https://www.transifex.com/odoo/teams/41243/he/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -31,7 +32,7 @@ msgstr ""
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_account_id
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_line_account_id
 msgid "Account"
-msgstr ""
+msgstr "חשבון"
 
 #. module: account_voucher
 #: model:ir.ui.view,arch_db:account_voucher.view_voucher_filter_sale
@@ -41,7 +42,7 @@ msgstr ""
 #. module: account_voucher
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_account_date
 msgid "Accounting Date"
-msgstr ""
+msgstr "תאריך החשבון"
 
 #. module: account_voucher
 #: model:ir.model,name:account_voucher.model_account_voucher
@@ -56,7 +57,7 @@ msgstr "סכום"
 #. module: account_voucher
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_line_account_analytic_id
 msgid "Analytic Account"
-msgstr "חשבון אנליטי"
+msgstr "חשבון ניהולי"
 
 #. module: account_voucher
 #: model:ir.ui.view,arch_db:account_voucher.view_purchase_receipt_form
@@ -69,7 +70,7 @@ msgstr ""
 #: model:ir.ui.view,arch_db:account_voucher.view_purchase_receipt_form
 #: model:ir.ui.view,arch_db:account_voucher.view_voucher_filter_vendor
 msgid "Bill Date"
-msgstr ""
+msgstr "תאריך חוב"
 
 #. module: account_voucher
 #: model:ir.ui.view,arch_db:account_voucher.view_purchase_receipt_form
@@ -94,7 +95,7 @@ msgstr ""
 #. module: account_voucher
 #: selection:account.voucher,state:0
 msgid "Cancelled"
-msgstr "בוטל"
+msgstr "בוטלה"
 
 #. module: account_voucher
 #: code:addons/account_voucher/models/account_voucher.py:159
@@ -122,7 +123,7 @@ msgstr "חברה"
 #: model:ir.model.fields,help:account_voucher.field_account_voucher_company_id
 #: model:ir.model.fields,help:account_voucher.field_account_voucher_line_company_id
 msgid "Company related to this journal"
-msgstr ""
+msgstr "חברה הקשורה ליומן זה"
 
 #. module: account_voucher
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_create_uid
@@ -171,7 +172,7 @@ msgstr "השם המוצג"
 #: model:ir.ui.view,arch_db:account_voucher.view_voucher_filter_sale
 #: model:ir.ui.view,arch_db:account_voucher.view_voucher_filter_vendor
 msgid "Draft"
-msgstr ""
+msgstr "טיוטה"
 
 #. module: account_voucher
 #: model:ir.ui.view,arch_db:account_voucher.view_voucher_filter
@@ -226,7 +227,7 @@ msgstr "הערות פנימיות"
 #: model:ir.ui.view,arch_db:account_voucher.view_voucher_filter_sale
 #: model:ir.ui.view,arch_db:account_voucher.view_voucher_filter_vendor
 msgid "Journal"
-msgstr "יומן"
+msgstr "יומנים"
 
 #. module: account_voucher
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_move_id
@@ -255,7 +256,7 @@ msgstr "עודכן לאחרונה על ידי"
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_line_write_date
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_write_date
 msgid "Last Updated on"
-msgstr "עודכן לאחרונה על"
+msgstr "תאריך עדכון אחרון"
 
 #. module: account_voucher
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_narration
@@ -338,12 +339,12 @@ msgstr ""
 #. module: account_voucher
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_line_product_id
 msgid "Product"
-msgstr "מוצר"
+msgstr "פריט"
 
 #. module: account_voucher
 #: selection:account.voucher,voucher_type:0
 msgid "Purchase"
-msgstr "רכישה"
+msgstr "רכש"
 
 #. module: account_voucher
 #: model:ir.ui.view,arch_db:account_voucher.view_purchase_receipt_form
@@ -374,7 +375,7 @@ msgstr "מכירה"
 #. module: account_voucher
 #: model:ir.ui.view,arch_db:account_voucher.view_sale_receipt_form
 msgid "Sales Information"
-msgstr "מידע על מכירות"
+msgstr ""
 
 #. module: account_voucher
 #: model:ir.ui.view,arch_db:account_voucher.view_sale_receipt_form
@@ -426,16 +427,16 @@ msgstr ""
 #. module: account_voucher
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_line_tax_ids
 msgid "Tax"
-msgstr "מס"
+msgstr "מע\"מ"
 
 #. module: account_voucher
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_tax_amount
-msgid "Tax amount"
-msgstr ""
+msgid "Tax Amount"
+msgstr "סכום המע\"מ"
 
 #. module: account_voucher
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_tax_correction
-msgid "Tax correction"
+msgid "Tax Correction"
 msgstr ""
 
 #. module: account_voucher
@@ -461,7 +462,7 @@ msgstr ""
 #. module: account_voucher
 #: model:ir.model.fields,field_description:account_voucher.field_account_voucher_amount
 msgid "Total"
-msgstr "סך הכל"
+msgstr "סה\"כ"
 
 #. module: account_voucher
 #: model:ir.ui.view,arch_db:account_voucher.view_voucher_tree
@@ -490,7 +491,7 @@ msgstr "אשר"
 #: model:ir.ui.view,arch_db:account_voucher.view_voucher_filter_vendor
 #: model:ir.ui.view,arch_db:account_voucher.view_voucher_tree_purchase
 msgid "Vendor"
-msgstr "ספק"
+msgstr ""
 
 #. module: account_voucher
 #: model:ir.ui.view,arch_db:account_voucher.view_purchase_receipt_form
@@ -549,7 +550,7 @@ msgid ""
 msgstr ""
 
 #. module: account_voucher
-#: code:addons/account_voucher/models/account_voucher.py:361
+#: code:addons/account_voucher/models/account_voucher.py:377
 #, python-format
 msgid "You must first select a partner!"
 msgstr ""

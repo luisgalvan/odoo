@@ -2,19 +2,17 @@ odoo.define('mail.utils', function (require) {
 "use strict";
 
 var bus = require('bus.bus').bus;
-var session = require('web.session');
-var web_client = require('web.web_client');
 
 
-function send_notification(title, content) {
-    if (Notification && Notification.permission === "granted") {
+function send_notification(widget, title, content) {
+    if (window.Notification && Notification.permission === "granted") {
         if (bus.is_master) {
             _send_native_notification(title, content);
         }
     } else {
-        web_client.do_notify(title, content);
+        widget.do_notify(title, content);
         if (bus.is_master) {
-            _beep();
+            _beep(widget);
         }
     }
 }
@@ -34,10 +32,11 @@ var _beep = (function () {
         return function () {};
     }
     var audio;
-    return function () {
+    return function (widget) {
         if (!audio) {
             audio = new Audio();
             var ext = audio.canPlayType("audio/ogg; codecs=vorbis") ? ".ogg" : ".mp3";
+            var session = widget.getSession();
             audio.src = session.url("/mail/static/src/audio/ting" + ext);
         }
         audio.play();
@@ -101,15 +100,17 @@ function inline (node, transform_children) {
 
 // Parses text to find email: Tagada <address@mail.fr> -> [Tagada, address@mail.fr] or False
 function parse_email (text) {
-    var result = text.match(/(.*)<(.*@.*)>/);
-    if (result) {
-        return [_.str.trim(result[1]), _.str.trim(result[2])];
+    if (text){
+        var result = text.match(/(.*)<(.*@.*)>/);
+        if (result) {
+            return [_.str.trim(result[1]), _.str.trim(result[2])];
+        }
+        result = text.match(/(.*@.*)/);
+        if (result) {
+            return [_.str.trim(result[1]), _.str.trim(result[1])];
+        }
+        return [text, false];
     }
-    result = text.match(/(.*@.*)/);
-    if (result) {
-        return [_.str.trim(result[1]), _.str.trim(result[1])];
-    }
-    return [text, false];
 }
 
 // Replaces textarea text into html text (add <p>, <a>)
